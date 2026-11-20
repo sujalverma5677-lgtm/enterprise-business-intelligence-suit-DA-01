@@ -1,0 +1,189 @@
+{
+  "reportTitle": "Enterprise Multi-Region Business Intelligence Suite",
+  "canvasSettings": {
+    "width": 1920,
+    "height": 1080,
+    "theme": "Executive Dark / Modern High-Contrast Minimalist"
+  },
+  "pages": [
+    {
+      "pageNumber": 1,
+      "pageName": "Executive KPI Command Center",
+      "purpose": "Consolidated high-level pulse for C-Suite (CEO, CFO, COO, Regional VPs)",
+      "layoutGrid": "4x3 responsive dashboard grid",
+      "visuals": [
+        {
+          "visualId": "kpi_card_revenue",
+          "type": "New Card / KPI Visual",
+          "title": "Total Net Revenue YTD",
+          "measures": ["[Net Revenue YTD]", "[Net Revenue YTD YoY Growth %]"],
+          "formatting": {
+            "displayUnits": "Millions ($M)",
+            "conditionalColor": "Green if YoY > 0 else Red"
+          }
+        },
+        {
+          "visualId": "kpi_card_ebitda",
+          "type": "New Card / KPI Visual",
+          "title": "Operating Income (EBITDA)",
+          "measures": ["[Operating Income (EBITDA)]", "[Operating Margin %]"],
+          "formatting": { "displayUnits": "Millions ($M)" }
+        },
+        {
+          "visualId": "kpi_card_otif",
+          "type": "Gauge / Radial KPI",
+          "title": "Supply Chain OTIF Rate",
+          "measures": ["[Weighted OTIF Delivery Rate %]"],
+          "target": 0.95,
+          "formatting": { "displayUnits": "Percentage (%)" }
+        },
+        {
+          "visualId": "kpi_card_attrition",
+          "type": "Card Visual",
+          "title": "Annualized Attrition Rate",
+          "measures": ["[Annualized Attrition Rate %]"],
+          "target": "< 12.0%",
+          "formatting": { "displayUnits": "Percentage (%)" }
+        },
+        {
+          "visualId": "geo_map_sales",
+          "type": "Azure Map / Shape Map",
+          "title": "Global Revenue Distribution by Operating Region",
+          "location": "Dim_Geography[Country]",
+          "bubbleSize": "[Total Net Revenue]",
+          "bubbleColor": "[Gross Margin %]",
+          "interaction": "Cross-filters entire dashboard"
+        },
+        {
+          "visualId": "trend_line_revenue_margin",
+          "type": "Line and Clustered Column Chart",
+          "title": "Monthly Revenue vs Gross Margin % with 3-Month Rolling Trend",
+          "xAxis": "Dim_Date[CalendarYearMonth]",
+          "columnValues": ["[Total Net Revenue]"],
+          "lineValues": ["[Gross Margin %]", "[Net Revenue 3-Month Rolling Avg]"]
+        }
+      ]
+    },
+    {
+      "pageNumber": 2,
+      "pageName": "Commercial Sales & Margin Analytics",
+      "purpose": "In-depth sales velocity, customer concentration, and margin analysis",
+      "visuals": [
+        {
+          "visualId": "waterfall_yoy",
+          "type": "Waterfall Chart",
+          "title": "Net Revenue YoY Variance Breakdown by Product Category",
+          "category": "Dim_Product[ProductCategory]",
+          "measure": "[Net Revenue YoY Growth $]"
+        },
+        {
+          "visualId": "matrix_customer_product",
+          "type": "Matrix Table with Conditional Heatmap",
+          "rows": ["Dim_Geography[OperatingRegion]", "Dim_Customer[CustomerName]"],
+          "columns": ["Dim_Product[ProductCategory]"],
+          "values": ["[Total Net Revenue]", "[Gross Margin %]"],
+          "drillThroughEnabled": true
+        },
+        {
+          "visualId": "scatter_price_volume",
+          "type": "Scatter Plot",
+          "title": "Product Pricing Power & Margin Matrix",
+          "x": "Dim_Product[ListUnitPrice]",
+          "y": "[Gross Margin %]",
+          "size": "[Total Quantity Sold]",
+          "legend": "Dim_Product[ProductCategory]"
+        }
+      ]
+    },
+    {
+      "pageNumber": 3,
+      "pageName": "Financial Ledger & P&L Variance",
+      "purpose": "Executive budget vs actual variance monitoring across cost centers",
+      "visuals": [
+        {
+          "visualId": "budget_variance_bar",
+          "type": "Clustered Bar Chart",
+          "title": "Budget vs Actuals by Expense Category & Department",
+          "yAxis": "Dim_Department[DepartmentName]",
+          "xValues": ["[Financial Actual OPEX]", "[Financial Budget Revenue]"]
+        },
+        {
+          "visualId": "pnl_financial_statement_table",
+          "type": "Financial Matrix (Power BI Financial Reporting)",
+          "rows": ["Fact_FinancialLedger[AccountCategory]", "Fact_FinancialLedger[AccountSubCategory]"],
+          "columns": ["Dim_Date[CalendarYearQuarter]"],
+          "values": ["[Financial Actual Revenue]", "[Financial Actual COGS]", "[Financial Actual OPEX]", "[Operating Income (EBITDA)]"]
+        }
+      ]
+    },
+    {
+      "pageNumber": 4,
+      "pageName": "Supply Chain & Warehouse Resiliency",
+      "purpose": "Inventory stockout warning, Days of Supply, and distribution health",
+      "visuals": [
+        {
+          "visualId": "stockout_risk_matrix",
+          "type": "Table with Alert Icons",
+          "title": "Critical Stockout Alerting Matrix (Available <= Safety Stock)",
+          "columns": ["Dim_Warehouse[WarehouseName]", "Dim_Product[ProductName]", "[Total Units Available to Promise]", "[Stockout Risk Count]", "[Average Days of Supply]"]
+        },
+        {
+          "visualId": "lead_time_distribution",
+          "type": "Column Chart",
+          "title": "Fulfillment Lead Time & OTIF % by Regional Hub",
+          "x": "Dim_Warehouse[WarehouseName]",
+          "y": ["[Weighted OTIF Delivery Rate %]", "Average(LeadTimeDays)"]
+        }
+      ]
+    },
+    {
+      "pageNumber": 5,
+      "pageName": "Human Capital & Workforce Intelligence",
+      "purpose": "Workforce planning, attrition mitigation, and salary benchmarking (RLS Protected)",
+      "visuals": [
+        {
+          "visualId": "hr_headcount_waterfall",
+          "type": "Waterfall Chart",
+          "title": "Headcount Dynamics (Beginning + Hires - Terminations = Ending)",
+          "categories": ["Dim_Date[CalendarYearMonth]"],
+          "values": ["[Active Headcount]", "[New Hires]", "[Terminations]"]
+        },
+        {
+          "visualId": "flight_risk_scatter",
+          "type": "Scatter Plot",
+          "title": "Talent Flight Risk vs Tenure Matrix",
+          "x": "[Average Employee Tenure (Months)]",
+          "y": "[Average Flight Risk Score]",
+          "legend": "Dim_Department[DepartmentName]",
+          "size": "[Total Monthly Payroll USD]"
+        }
+      ]
+    },
+    {
+      "pageNumber": 6,
+      "pageName": "Transaction Drill-Through Detail",
+      "purpose": "Granular transaction level audit trail for deep forensic inspection",
+      "isDrillthroughPage": true,
+      "drillthroughFilters": ["Dim_Geography[OperatingRegion]", "Dim_Customer[CustomerName]", "Dim_Product[ProductName]"],
+      "visuals": [
+        {
+          "visualId": "drill_detail_grid",
+          "type": "Tabular Grid",
+          "columns": [
+            "Fact_Sales[OrderNumber]",
+            "Dim_Date[FullDate]",
+            "Dim_Customer[CustomerName]",
+            "Dim_Product[ProductName]",
+            "Dim_Geography[Country]",
+            "Fact_Sales[SalesChannel]",
+            "Fact_Sales[QuantitySold]",
+            "Fact_Sales[GrossRevenueUSD]",
+            "Fact_Sales[DiscountAmountUSD]",
+            "Fact_Sales[NetRevenueUSD]",
+            "Fact_Sales[GrossMarginUSD]"
+          ]
+        }
+      ]
+    }
+  ]
+}

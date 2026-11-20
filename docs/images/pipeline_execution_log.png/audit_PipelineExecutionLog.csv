@@ -1,0 +1,12 @@
+ExecutionID,PipelineName,SourceSystem,TargetTable,RecordsRead,RecordsInserted,RecordsUpdated,Status,StartTime,EndTime,ErrorMessage
+1001,Master_DW_Orchestration,CRM/ERP/WMS/HRIS,Multi-Fact Conformed DW,125000,8450,1200,COMPLETED,2026-11-01 02:00:00.000,2026-11-01 02:06:14.210,
+1002,pl_extract_sales_orders,Salesforce_CRM,stg.SalesOrders,24500,24500,0,COMPLETED,2026-11-01 02:00:15.120,2026-11-01 02:01:22.450,
+1003,pl_extract_gl_ledger,SAP_S4HANA,stg.GeneralLedger,8200,8200,0,COMPLETED,2026-11-01 02:01:25.000,2026-11-01 02:02:10.880,
+1004,pl_extract_inventory_wms,Manhattan_WMS,stg.WarehouseSnapshots,18400,18400,0,COMPLETED,2026-11-01 02:02:15.500,2026-11-01 02:03:05.100,
+1005,pl_extract_hris_workday,Workday_HRIS,stg.EmployeeMonthly,1250,1250,0,COMPLETED,2026-11-01 02:03:10.000,2026-11-01 02:03:45.320,
+1006,pl_transform_dim_merge,Staging_DW,dw.Dimensions_SCD,52000,45,110,COMPLETED,2026-11-01 02:03:50.000,2026-11-01 02:04:40.900,
+1007,pl_transform_fact_sales,stg.SalesOrders,dw.Fact_Sales,24500,5952,420,COMPLETED,2026-11-01 02:04:45.000,2026-11-01 02:05:30.150,
+1008,pl_data_quality_gates,EnterpriseDW,audit.AutomatedTests,7,7,0,COMPLETED,2026-11-01 02:05:32.000,2026-11-01 02:05:48.800,
+1009,pl_powerbi_dataset_refresh,Azure_Data_Factory,PowerBI_SemanticModel,1,1,0,COMPLETED,2026-11-01 02:05:50.000,2026-11-01 02:06:12.000,
+1010,Master_DW_Orchestration,CRM/ERP/WMS/HRIS,Multi-Fact Conformed DW,128400,9120,980,COMPLETED,2026-11-08 02:00:00.000,2026-11-08 02:06:05.140,
+1011,Master_DW_Orchestration,CRM/ERP/WMS/HRIS,Multi-Fact Conformed DW,131200,8940,1150,COMPLETED,2026-11-15 02:00:00.000,2026-11-15 02:05:58.750,

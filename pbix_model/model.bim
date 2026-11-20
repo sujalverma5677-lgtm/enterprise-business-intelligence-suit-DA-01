@@ -1,0 +1,202 @@
+{
+  "name": "EnterpriseDW_SemanticModel",
+  "compatibilityLevel": 1567,
+  "model": {
+    "culture": "en-US",
+    "dataAccessOptions": {
+      "legacyRedirects": true,
+      "returnErrorValuesAsNull": true
+    },
+    "defaultPowerBIDataSourceVersion": "powerBI_V3",
+    "relationships": [
+      {
+        "name": "Fact_Sales_Dim_Date",
+        "fromTable": "Fact_Sales",
+        "fromColumn": "OrderDateKey",
+        "toTable": "Dim_Date",
+        "toColumn": "DateKey"
+      },
+      {
+        "name": "Fact_Sales_Dim_Customer",
+        "fromTable": "Fact_Sales",
+        "fromColumn": "CustomerKey",
+        "toTable": "Dim_Customer",
+        "toColumn": "CustomerKey"
+      },
+      {
+        "name": "Fact_Sales_Dim_Product",
+        "fromTable": "Fact_Sales",
+        "fromColumn": "ProductKey",
+        "toTable": "Dim_Product",
+        "toColumn": "ProductKey"
+      },
+      {
+        "name": "Fact_Sales_Dim_Geography",
+        "fromTable": "Fact_Sales",
+        "fromColumn": "GeographyKey",
+        "toTable": "Dim_Geography",
+        "toColumn": "GeographyKey"
+      },
+      {
+        "name": "Fact_FinancialLedger_Dim_Date",
+        "fromTable": "Fact_FinancialLedger",
+        "fromColumn": "DateKey",
+        "toTable": "Dim_Date",
+        "toColumn": "DateKey"
+      },
+      {
+        "name": "Fact_FinancialLedger_Dim_Geography",
+        "fromTable": "Fact_FinancialLedger",
+        "fromColumn": "GeographyKey",
+        "toTable": "Dim_Geography",
+        "toColumn": "GeographyKey"
+      },
+      {
+        "name": "Fact_FinancialLedger_Dim_Department",
+        "fromTable": "Fact_FinancialLedger",
+        "fromColumn": "DepartmentKey",
+        "toTable": "Dim_Department",
+        "toColumn": "DepartmentKey"
+      },
+      {
+        "name": "Fact_SupplyChain_Dim_Date",
+        "fromTable": "Fact_SupplyChainInventory",
+        "fromColumn": "SnapshotDateKey",
+        "toTable": "Dim_Date",
+        "toColumn": "DateKey"
+      },
+      {
+        "name": "Fact_SupplyChain_Dim_Warehouse",
+        "fromTable": "Fact_SupplyChainInventory",
+        "fromColumn": "WarehouseKey",
+        "toTable": "Dim_Warehouse",
+        "toColumn": "WarehouseKey"
+      },
+      {
+        "name": "Fact_SupplyChain_Dim_Product",
+        "fromTable": "Fact_SupplyChainInventory",
+        "fromColumn": "ProductKey",
+        "toTable": "Dim_Product",
+        "toColumn": "ProductKey"
+      },
+      {
+        "name": "Fact_HR_Dim_Date",
+        "fromTable": "Fact_HRMonthlySnapshot",
+        "fromColumn": "DateKey",
+        "toTable": "Dim_Date",
+        "toColumn": "DateKey"
+      },
+      {
+        "name": "Fact_HR_Dim_Employee",
+        "fromTable": "Fact_HRMonthlySnapshot",
+        "fromColumn": "EmployeeKey",
+        "toTable": "Dim_Employee",
+        "toColumn": "EmployeeKey"
+      },
+      {
+        "name": "Fact_HR_Dim_Geography",
+        "fromTable": "Fact_HRMonthlySnapshot",
+        "fromColumn": "GeographyKey",
+        "toTable": "Dim_Geography",
+        "toColumn": "GeographyKey"
+      },
+      {
+        "name": "Dim_Customer_Dim_Geography",
+        "fromTable": "Dim_Customer",
+        "fromColumn": "GeographyKey",
+        "toTable": "Dim_Geography",
+        "toColumn": "GeographyKey"
+      }
+    ],
+    "tables": [
+      {
+        "name": "Dim_Date",
+        "columns": [
+          { "name": "DateKey", "dataType": "int64", "isKey": true },
+          { "name": "FullDate", "dataType": "dateTime" },
+          { "name": "CalendarYear", "dataType": "int64" },
+          { "name": "CalendarQuarterName", "dataType": "string" },
+          { "name": "MonthName", "dataType": "string", "sortByColumn": "MonthNumberOfYear" },
+          { "name": "MonthNumberOfYear", "dataType": "int64" },
+          { "name": "CalendarYearMonth", "dataType": "string" },
+          { "name": "CalendarYearQuarter", "dataType": "string" }
+        ],
+        "hierarchies": [
+          {
+            "name": "Calendar Hierarchy",
+            "levels": [
+              { "name": "Year", "column": "CalendarYear" },
+              { "name": "Quarter", "column": "CalendarQuarterName" },
+              { "name": "Month", "column": "MonthName" },
+              { "name": "Date", "column": "FullDate" }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Dim_Geography",
+        "columns": [
+          { "name": "GeographyKey", "dataType": "int64", "isKey": true },
+          { "name": "GlobalRegion", "dataType": "string" },
+          { "name": "OperatingRegion", "dataType": "string" },
+          { "name": "SubRegion", "dataType": "string" },
+          { "name": "Country", "dataType": "string" },
+          { "name": "StateProvince", "dataType": "string" },
+          { "name": "City", "dataType": "string" },
+          { "name": "RegionalDirectorEmail", "dataType": "string" }
+        ],
+        "hierarchies": [
+          {
+            "name": "Geography Hierarchy",
+            "levels": [
+              { "name": "Global Region", "column": "GlobalRegion" },
+              { "name": "Operating Region", "column": "OperatingRegion" },
+              { "name": "Country", "column": "Country" },
+              { "name": "City", "column": "City" }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Dim_Product",
+        "columns": [
+          { "name": "ProductKey", "dataType": "int64", "isKey": true },
+          { "name": "ProductSKU", "dataType": "string" },
+          { "name": "ProductName", "dataType": "string" },
+          { "name": "ProductCategory", "dataType": "string" },
+          { "name": "ProductSubcategory", "dataType": "string" },
+          { "name": "Brand", "dataType": "string" },
+          { "name": "StandardUnitCost", "dataType": "decimal" },
+          { "name": "ListUnitPrice", "dataType": "decimal" }
+        ],
+        "hierarchies": [
+          {
+            "name": "Product Hierarchy",
+            "levels": [
+              { "name": "Category", "column": "ProductCategory" },
+              { "name": "Subcategory", "column": "ProductSubcategory" },
+              { "name": "Product", "column": "ProductName" }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Fact_Sales",
+        "columns": [
+          { "name": "SalesOrderKey", "dataType": "int64", "isKey": true },
+          { "name": "OrderNumber", "dataType": "string" },
+          { "name": "OrderDateKey", "dataType": "int64" },
+          { "name": "CustomerKey", "dataType": "int64" },
+          { "name": "ProductKey", "dataType": "int64" },
+          { "name": "GeographyKey", "dataType": "int64" },
+          { "name": "QuantitySold", "dataType": "int64" },
+          { "name": "GrossRevenueUSD", "dataType": "decimal" },
+          { "name": "DiscountAmountUSD", "dataType": "decimal" },
+          { "name": "NetRevenueUSD", "dataType": "decimal" },
+          { "name": "TotalCostUSD", "dataType": "decimal" },
+          { "name": "GrossMarginUSD", "dataType": "decimal" }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,95 @@
+/*
+ ==============================================================================
+ Enterprise Business Intelligence Suite (Multi-Region)
+ Row-Level Security (RLS) DAX Expression Rules
+ ==============================================================================
+*/
+
+// ==============================================================================
+// ROLE 1: DYNAMIC REGION SECURITY (RECOMMENDED FOR ENTERPRISE DEPLOYMENTS)
+// ==============================================================================
+// Applied to Table: Dim_Geography
+// Mechanism:
+// Reads the logged-in user's Azure Active Directory / Power BI Service identity
+// via USERPRINCIPALNAME(). Looks up UserSecurityBridge to check if the user has 'ALL'
+// permissions or specific OperatingRegion/GlobalRegion permissions.
+
+[Dynamic_Region_Security_Filter_Expression] = 
+VAR CurrentUserEmail = USERPRINCIPALNAME()
+VAR UserAssignments = 
+    FILTER(
+        UserSecurityBridge,
+        UserSecurityBridge[UserPrincipalName] = CurrentUserEmail
+    )
+VAR HasGlobalAccess = 
+    COUNTROWS(
+        FILTER(
+            UserAssignments,
+            UserSecurityBridge[OperatingRegion] = "ALL" || UserSecurityBridge[GlobalRegion] = "ALL"
+        )
+    ) > 0
+VAR AllowedOperatingRegions = 
+    SELECTCOLUMNS(
+        UserAssignments,
+        "AllowedRegion", UserSecurityBridge[OperatingRegion]
+    )
+VAR AllowedGlobalRegions = 
+    SELECTCOLUMNS(
+        UserAssignments,
+        "AllowedGlobal", UserSecurityBridge[GlobalRegion]
+    )
+RETURN
+    HasGlobalAccess 
+    || Dim_Geography[OperatingRegion] IN AllowedOperatingRegions 
+    || Dim_Geography[GlobalRegion] IN AllowedGlobalRegions
+
+
+// ==============================================================================
+// ROLE 2: STATIC REGIONAL ROLES (FOR INDIVIDUAL REGIONAL MANAGERS)
+// ==============================================================================
+
+// Role: Regional_Director_NA
+// Table: Dim_Geography
+[Filter_Dim_Geography_NA] = 
+Dim_Geography[OperatingRegion] = "North America"
+
+// Role: Regional_Director_EMEA
+// Table: Dim_Geography
+[Filter_Dim_Geography_EMEA] = 
+Dim_Geography[GlobalRegion] = "EMEA"
+
+// Role: Regional_Director_APAC
+// Table: Dim_Geography
+[Filter_Dim_Geography_APAC] = 
+Dim_Geography[GlobalRegion] = "APAC"
+
+// Role: Regional_Director_LATAM
+// Table: Dim_Geography
+[Filter_Dim_Geography_LATAM] = 
+Dim_Geography[OperatingRegion] = "LATAM"
+
+
+// ==============================================================================
+// ROLE 3: HR CONFIDENTIAL ROLE
+// ==============================================================================
+// Applied to Table: Dim_Employee / Fact_HRMonthlySnapshot
+// Only users tagged with AllowHRConfidential = 1 can see salary/compensation details.
+// For all other users, HR salary lines evaluate to BLANK().
+
+[HR_Access_Check_Measure] = 
+VAR CurrentUserEmail = USERPRINCIPALNAME()
+VAR HasHRAccess = 
+    LOOKUPVALUE(
+        UserSecurityBridge[AllowHRConfidential],
+        UserSecurityBridge[UserPrincipalName], CurrentUserEmail,
+        0
+    )
+RETURN
+    IF(HasHRAccess = 1, 1, 0)
+
+[Masked Total Monthly Payroll USD] = 
+IF(
+    [HR_Access_Check_Measure] = 1,
+    [Total Monthly Payroll USD],
+    BLANK() // Data Masking for non-authorized personnel
+)

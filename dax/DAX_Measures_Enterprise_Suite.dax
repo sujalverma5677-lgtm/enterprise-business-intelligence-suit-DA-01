@@ -1,0 +1,282 @@
+/*
+ ==============================================================================
+ Enterprise Business Intelligence Suite (Multi-Region)
+ Master DAX Measure Repository
+ ==============================================================================
+*/
+
+// ==============================================================================
+// 1. CORE SALES & REVENUE MEASURES
+// ==============================================================================
+
+[Total Orders] = 
+DISTINCTCOUNT(Fact_Sales[OrderNumber])
+
+[Total Quantity Sold] = 
+SUM(Fact_Sales[QuantitySold])
+
+[Total Gross Revenue] = 
+SUM(Fact_Sales[GrossRevenueUSD])
+
+[Total Discount Amount] = 
+SUM(Fact_Sales[DiscountAmountUSD])
+
+[Total Net Revenue] = 
+SUM(Fact_Sales[NetRevenueUSD])
+
+[Total Product Cost] = 
+SUM(Fact_Sales[TotalCostUSD])
+
+[Gross Margin $] = 
+[Total Net Revenue] - [Total Product Cost]
+
+[Gross Margin %] = 
+DIVIDE([Gross Margin $], [Total Net Revenue], 0)
+
+[Average Order Value (AOV)] = 
+DIVIDE([Total Net Revenue], [Total Orders], 0)
+
+[Discount Rate %] = 
+DIVIDE([Total Discount Amount], [Total Gross Revenue], 0)
+
+// ==============================================================================
+// 2. TIME INTELLIGENCE & YoY ANALYSIS (SALES)
+// ==============================================================================
+
+[Net Revenue YTD] = 
+CALCULATE(
+    [Total Net Revenue],
+    DATESYTD(Dim_Date[FullDate])
+)
+
+[Net Revenue QTD] = 
+CALCULATE(
+    [Total Net Revenue],
+    DATESQTD(Dim_Date[FullDate])
+)
+
+[Net Revenue MTD] = 
+CALCULATE(
+    [Total Net Revenue],
+    DATESMTD(Dim_Date[FullDate])
+)
+
+[Net Revenue PY] = 
+CALCULATE(
+    [Total Net Revenue],
+    SAMEPERIODLASTYEAR(Dim_Date[FullDate])
+)
+
+[Net Revenue YoY Growth $] = 
+VAR CurrentRevenue = [Total Net Revenue]
+VAR PriorRevenue = [Net Revenue PY]
+RETURN
+    IF(
+        NOT ISBLANK(PriorRevenue),
+        CurrentRevenue - PriorRevenue,
+        BLANK()
+    )
+
+[Net Revenue YoY Growth %] = 
+VAR GrowthDollar = [Net Revenue YoY Growth $]
+VAR PriorRevenue = [Net Revenue PY]
+RETURN
+    DIVIDE(GrowthDollar, PriorRevenue, BLANK())
+
+[Net Revenue YTD Prior Year] = 
+CALCULATE(
+    [Net Revenue YTD],
+    SAMEPERIODLASTYEAR(Dim_Date[FullDate])
+)
+
+[Net Revenue YTD YoY Growth %] = 
+VAR CurrentYTD = [Net Revenue YTD]
+VAR PriorYTD = [Net Revenue YTD Prior Year]
+RETURN
+    DIVIDE(CurrentYTD - PriorYTD, PriorYTD, BLANK())
+
+[Gross Margin % PY] = 
+CALCULATE(
+    [Gross Margin %],
+    SAMEPERIODLASTYEAR(Dim_Date[FullDate])
+)
+
+[Gross Margin % YoY Bps Change] = 
+([Gross Margin %] - [Gross Margin % PY]) * 10000 // In basis points
+
+// ==============================================================================
+// 3. ROLLING WINDOWS & MOVING AVERAGES
+// ==============================================================================
+
+[Net Revenue 3-Month Rolling Avg] = 
+VAR EndDate = MAX(Dim_Date[FullDate])
+VAR PeriodStart = EDATE(EndDate, -2) // Last 3 completed months
+RETURN
+    CALCULATE(
+        AVERAGEX(
+            VALUES(Dim_Date[CalendarYearMonth]),
+            [Total Net Revenue]
+        ),
+        DATESINPERIOD(Dim_Date[FullDate], EndDate, -3, MONTH)
+    )
+
+[Net Revenue 12-Month Rolling Total] = 
+VAR LastDateSelected = MAX(Dim_Date[FullDate])
+RETURN
+    CALCULATE(
+        [Total Net Revenue],
+        DATESINPERIOD(Dim_Date[FullDate], LastDateSelected, -12, MONTH)
+    )
+
+[Net Revenue 30-Day Rolling Avg] = 
+VAR LastDateSelected = MAX(Dim_Date[FullDate])
+RETURN
+    CALCULATE(
+        AVERAGEX(
+            VALUES(Dim_Date[FullDate]),
+            [Total Net Revenue]
+        ),
+        DATESINPERIOD(Dim_Date[FullDate], LastDateSelected, -30, DAY)
+    )
+
+// ==============================================================================
+// 4. FINANCIAL LEDGER & PROFITABILITY MEASURES
+// ==============================================================================
+
+[Financial Actual Revenue] = 
+CALCULATE(
+    SUM(Fact_FinancialLedger[ActualAmountUSD]),
+    Fact_FinancialLedger[AccountCategory] = "Revenue"
+)
+
+[Financial Actual COGS] = 
+CALCULATE(
+    SUM(Fact_FinancialLedger[ActualAmountUSD]),
+    Fact_FinancialLedger[AccountCategory] = "Cost of Goods Sold"
+)
+
+[Financial Actual OPEX] = 
+CALCULATE(
+    SUM(Fact_FinancialLedger[ActualAmountUSD]),
+    Fact_FinancialLedger[AccountCategory] = "OPEX"
+)
+
+[Financial Actual CAPEX] = 
+CALCULATE(
+    SUM(Fact_FinancialLedger[ActualAmountUSD]),
+    Fact_FinancialLedger[AccountCategory] = "CAPEX"
+)
+
+[Operating Income (EBITDA)] = 
+[Financial Actual Revenue] - [Financial Actual COGS] - [Financial Actual OPEX]
+
+[Operating Margin %] = 
+DIVIDE([Operating Income (EBITDA)], [Financial Actual Revenue], 0)
+
+[Financial Budget Revenue] = 
+CALCULATE(
+    SUM(Fact_FinancialLedger[BudgetAmountUSD]),
+    Fact_FinancialLedger[AccountCategory] = "Revenue"
+)
+
+[Revenue Budget Variance $] = 
+[Financial Actual Revenue] - [Financial Budget Revenue]
+
+[Revenue Budget Variance %] = 
+DIVIDE([Revenue Budget Variance $], [Financial Budget Revenue], 0)
+
+// ==============================================================================
+// 5. HUMAN RESOURCES (PEOPLE ANALYTICS) MEASURES
+// ==============================================================================
+
+[Active Headcount] = 
+CALCULATE(
+    DISTINCTCOUNT(Fact_HRMonthlySnapshot[EmployeeKey]),
+    Fact_HRMonthlySnapshot[IsActiveHeadcount] = 1,
+    LASTDATE(Dim_Date[FullDate])
+)
+
+[New Hires] = 
+CALCULATE(
+    SUM(Fact_HRMonthlySnapshot[IsNewHire])
+)
+
+[Terminations] = 
+CALCULATE(
+    SUM(Fact_HRMonthlySnapshot[IsTerminated])
+)
+
+[Annualized Attrition Rate %] = 
+VAR TermCount = [Terminations]
+VAR AvgHeadcount = 
+    AVERAGEX(
+        VALUES(Dim_Date[CalendarYearMonth]),
+        [Active Headcount]
+    )
+RETURN
+    IF(
+        AvgHeadcount > 0,
+        DIVIDE(TermCount * 12, AvgHeadcount, 0),
+        0
+    )
+
+[Average Employee Tenure (Months)] = 
+AVERAGE(Fact_HRMonthlySnapshot[TenureInMonths])
+
+[Total Monthly Payroll USD] = 
+SUM(Fact_HRMonthlySnapshot[MonthlyBaseSalaryUSD]) + SUM(Fact_HRMonthlySnapshot[OvertimeCostUSD])
+
+[Annualized Payroll Run Rate USD] = 
+[Total Monthly Payroll USD] * 12
+
+[Revenue per Active Employee] = 
+DIVIDE([Total Net Revenue], [Active Headcount], 0)
+
+[Average Flight Risk Score] = 
+AVERAGE(Fact_HRMonthlySnapshot[FlightRiskScore])
+
+// ==============================================================================
+// 6. SUPPLY CHAIN & INVENTORY HEALTH MEASURES
+// ==============================================================================
+
+[Current Inventory Value USD] = 
+CALCULATE(
+    SUM(Fact_SupplyChainInventory[InventoryCarryingValueUSD]),
+    LASTDATE(Dim_Date[FullDate])
+)
+
+[Total Units On Hand] = 
+CALCULATE(
+    SUM(Fact_SupplyChainInventory[UnitsOnHand]),
+    LASTDATE(Dim_Date[FullDate])
+)
+
+[Total Units Available to Promise] = 
+CALCULATE(
+    SUM(Fact_SupplyChainInventory[AvailableToPromise]),
+    LASTDATE(Dim_Date[FullDate])
+)
+
+[Stockout Risk Count] = 
+CALCULATE(
+    SUM(Fact_SupplyChainInventory[StockoutRiskFlag]),
+    LASTDATE(Dim_Date[FullDate])
+)
+
+[Stockout Risk SKU %] = 
+VAR TotalSKUs = DISTINCTCOUNT(Fact_SupplyChainInventory[ProductKey])
+VAR AtRiskSKUs = [StockoutRiskCount]
+RETURN
+    DIVIDE(AtRiskSKUs, TotalSKUs, 0)
+
+[Average Days of Supply] = 
+AVERAGE(Fact_SupplyChainInventory[DaysOfSupply])
+
+[Weighted OTIF Delivery Rate %] = 
+AVERAGE(Fact_SupplyChainInventory[OTIFDeliveryRatePct]) / 100.0
+
+[Inventory Turnover Ratio] = 
+VAR AnnualizedCOGS = [Total Product Cost] * 12 / DISTINCTCOUNT(Dim_Date[MonthNumberOfYear])
+VAR AvgInventoryValue = [Current Inventory Value USD]
+RETURN
+    DIVIDE(AnnualizedCOGS, AvgInventoryValue, 0)

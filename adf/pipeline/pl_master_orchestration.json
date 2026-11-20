@@ -1,0 +1,187 @@
+{
+  "name": "pl_master_orchestration",
+  "properties": {
+    "description": "Master Enterprise DW Orchestration Pipeline with Concurrency, Quality Gates, and Power BI Refresh",
+    "annotations": ["Production", "ETL", "MasterOrchestrator"],
+    "parameters": {
+      "TriggerDate": {
+        "type": "string",
+        "defaultValue": "@utcnow('yyyy-MM-dd')"
+      },
+      "LoadMode": {
+        "type": "string",
+        "defaultValue": "INCREMENTAL"
+      }
+    },
+    "variables": {
+      "BatchExecutionID": {
+        "type": "String"
+      },
+      "ValidationStatus": {
+        "type": "String",
+        "defaultValue": "PENDING"
+      }
+    },
+    "activities": [
+      {
+        "name": "StartAuditLogging",
+        "type": "SqlServerStoredProcedure",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "0.00:05:00",
+          "retry": 2,
+          "retryIntervalInSeconds": 30
+        },
+        "typeProperties": {
+          "storedProcedureName": "audit.usp_StartPipelineBatch",
+          "storedProcedureParameters": {
+            "PipelineName": { "value": "pl_master_orchestration", "type": "String" },
+            "LoadMode": { "value": "@pipeline().parameters.LoadMode", "type": "String" }
+          }
+        },
+        "linkedServiceName": {
+          "referenceName": "ls_azure_sql_dw",
+          "type": "LinkedServiceReference"
+        }
+      },
+      {
+        "name": "ParallelDimensionLoads",
+        "type": "ForEach",
+        "dependsOn": [
+          {
+            "activity": "StartAuditLogging",
+            "dependencyConditions": ["Succeeded"]
+          }
+        ],
+        "typeProperties": {
+          "isSequential": false,
+          "batchCount": 5,
+          "items": {
+            "value": "@createArray('Dim_Geography', 'Dim_Product', 'Dim_Customer', 'Dim_Department', 'Dim_Employee', 'Dim_Warehouse')",
+            "type": "Expression"
+          },
+          "activities": [
+            {
+              "name": "ExecuteDimensionSCDProcedure",
+              "type": "SqlServerStoredProcedure",
+              "typeProperties": {
+                "storedProcedureName": "dw.usp_ProcessConformedDimension",
+                "storedProcedureParameters": {
+                  "DimensionName": { "value": "@item()", "type": "String" }
+                }
+              },
+              "linkedServiceName": {
+                "referenceName": "ls_azure_sql_dw",
+                "type": "LinkedServiceReference"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "name": "ParallelFactLoads",
+        "type": "ForEach",
+        "dependsOn": [
+          {
+            "activity": "ParallelDimensionLoads",
+            "dependencyConditions": ["Succeeded"]
+          }
+        ],
+        "typeProperties": {
+          "isSequential": false,
+          "batchCount": 4,
+          "items": {
+            "value": "@createArray('Fact_Sales', 'Fact_FinancialLedger', 'Fact_SupplyChainInventory', 'Fact_HRMonthlySnapshot')",
+            "type": "Expression"
+          },
+          "activities": [
+            {
+              "name": "ExecuteFactIncrementalProcedure",
+              "type": "SqlServerStoredProcedure",
+              "typeProperties": {
+                "storedProcedureName": "dw.usp_ProcessConformedFact",
+                "storedProcedureParameters": {
+                  "FactTableName": { "value": "@item()", "type": "String" },
+                  "SnapshotDate": { "value": "@pipeline().parameters.TriggerDate", "type": "String" }
+                }
+              },
+              "linkedServiceName": {
+                "referenceName": "ls_azure_sql_dw",
+                "type": "LinkedServiceReference"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "name": "RunDataQualityGate",
+        "type": "SqlServerStoredProcedure",
+        "dependsOn": [
+          {
+            "activity": "ParallelFactLoads",
+            "dependencyConditions": ["Succeeded"]
+          }
+        ],
+        "typeProperties": {
+          "storedProcedureName": "audit.usp_RunAutomatedReconciliationTests",
+          "storedProcedureParameters": {
+            "HaltOnFailure": { "value": true, "type": "Boolean" }
+          }
+        },
+        "linkedServiceName": {
+          "referenceName": "ls_azure_sql_dw",
+          "type": "LinkedServiceReference"
+        }
+      },
+      {
+        "name": "TriggerPowerBIDatasetRefresh",
+        "type": "WebActivity",
+        "dependsOn": [
+          {
+            "activity": "RunDataQualityGate",
+            "dependencyConditions": ["Succeeded"]
+          }
+        ],
+        "policy": {
+          "timeout": "0.00:10:00",
+          "retry": 1
+        },
+        "typeProperties": {
+          "url": "https://api.powerbi.com/v1.0/myorg/groups/4a1f3c9e-prod-workspace/datasets/b7d34190-enterprise-semantic-model/refreshes",
+          "method": "POST",
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "body": {
+            "notifyOption": "MailOnFailure",
+            "type": "Automatic"
+          },
+          "authentication": {
+            "type": "MSI",
+            "resource": "https://analysis.windows.net/powerbi/api"
+          }
+        }
+      },
+      {
+        "name": "CompleteAuditLogging",
+        "type": "SqlServerStoredProcedure",
+        "dependsOn": [
+          {
+            "activity": "TriggerPowerBIDatasetRefresh",
+            "dependencyConditions": ["Succeeded"]
+          }
+        ],
+        "typeProperties": {
+          "storedProcedureName": "audit.usp_CompletePipelineBatch",
+          "storedProcedureParameters": {
+            "Status": { "value": "SUCCESS", "type": "String" }
+          }
+        },
+        "linkedServiceName": {
+          "referenceName": "ls_azure_sql_dw",
+          "type": "LinkedServiceReference"
+        }
+      }
+    ]
+  }
+}

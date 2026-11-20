@@ -1,0 +1,32 @@
+{
+  "name": "ds_dw_conformed_fact",
+  "type": "Microsoft.DataFactory/factories/datasets",
+  "properties": {
+    "linkedServiceName": {
+      "referenceName": "ls_azure_sql_dw",
+      "type": "LinkedServiceReference"
+    },
+    "parameters": {
+      "SchemaName": {
+        "type": "String",
+        "defaultValue": "dw"
+      },
+      "TableName": {
+        "type": "String"
+      }
+    },
+    "annotations": ["DataWarehouse", "Facts"],
+    "type": "AzureSqlTable",
+    "schema": [],
+    "typeProperties": {
+      "schema": {
+        "value": "@dataset().SchemaName",
+        "type": "Expression"
+      },
+      "table": {
+        "value": "@dataset().TableName",
+        "type": "Expression"
+      }
+    }
+  }
+}

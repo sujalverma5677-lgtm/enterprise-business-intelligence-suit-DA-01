@@ -1,0 +1,23 @@
+{
+  "name": "ls_azure_sql_dw",
+  "type": "Microsoft.DataFactory/factories/linkedservices",
+  "properties": {
+    "description": "Production connection to Enterprise Data Warehouse on Azure SQL Database / Managed Instance",
+    "annotations": ["EnterpriseDW", "Production", "MultiRegionBI"],
+    "type": "AzureSqlDatabase",
+    "typeProperties": {
+      "connectionString": "Server=tcp:@{linkedService().ServerName}.database.windows.net,1433;Initial Catalog=@{linkedService().DatabaseName};Persist Security Info=False;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;",
+      "authenticationType": "ActiveDirectoryManagedIdentity"
+    },
+    "parameters": {
+      "ServerName": {
+        "type": "String",
+        "defaultValue": "sql-enterprise-dw-prod"
+      },
+      "DatabaseName": {
+        "type": "String",
+        "defaultValue": "EnterpriseDW"
+      }
+    }
+  }
+}
